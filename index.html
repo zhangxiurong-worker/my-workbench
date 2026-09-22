@@ -209,9 +209,11 @@ function captureMine(){
 
 /* 拉取远端并合并（本地自己今天的勾选优先） */
 async function pull(){
+  if (syncing) return;
   try {
     const remote = await apiGet();
     const mine = profile ? captureMine() : {};
+    const myPin = (profile && profile.role==='staff' && state.pins) ? state.pins[profile.name] : null;
     if (remote) {
       const adminKeep = profile && profile.role==='admin' && adminAuthed;
       const localTodos = adminKeep ? state.todos : null;
@@ -225,6 +227,7 @@ async function pull(){
     if (profile) {
       state.records[todayStr()] = state.records[todayStr()] || {};
       if (Object.keys(mine).length) state.records[todayStr()][myName()] = Object.assign(state.records[todayStr()][myName()] || {}, mine);
+      if (myPin) { state.pins = state.pins || {}; state.pins[profile.name] = myPin; }
     }
     setSync('ok');
   } catch (e) {
@@ -250,7 +253,8 @@ async function push(){
         if (profile && profile.role==='staff') {
           out.records[todayStr()][profile.name] = Object.assign(out.records[todayStr()][profile.name] || {}, mine);
           out.pins = out.pins || {};
-          if (state.pins && state.pins[profile.name]) out.pins[profile.name] = state.pins[profile.name];
+          const snapPin = localState.pins && localState.pins[profile.name];
+          if (snapPin) out.pins[profile.name] = snapPin;
         } else {
           out.records[todayStr()] = localState.records[todayStr()] || out.records[todayStr()];
           out.todos = localState.todos;
