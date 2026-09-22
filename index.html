@@ -71,6 +71,8 @@
   .input-row select:focus { border-color: var(--primary); }
   .assign-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #EAF2FB; color: #3A6EA5; white-space: nowrap; margin-left: 6px; }
   .time-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #E8F5E9; color: #2E7D32; white-space: nowrap; margin-left: 6px; }
+  #histDate { border: 2px solid #EEEEF2; border-radius: 10px; padding: 8px 12px; font-size: 14px; outline: none; margin-bottom: 6px; }
+  #histDate:focus { border-color: var(--primary); }
 
   .screen { max-width: 400px; margin: 40px auto 0; text-align: center; }
   .screen .emoji { font-size: 52px; display: block; margin-bottom: 14px; }
@@ -283,6 +285,20 @@ function boardData(){
   return { rows, checked, avg, total };
 }
 
+function histHtml(ds){
+  const rec = (state.records[ds] || {});
+  const names = Object.keys(rec);
+  if (!names.length) return `<div class="empty-tip">这一天没有打卡记录</div>`;
+  return names.map(n => {
+    const r = rec[n];
+    const items = Object.keys(r).map(id => {
+      const t = state.todos.find(x => x.id === id);
+      return `<div class="manage-item"><div class="t">${t ? esc(t.title) : '<i style="color:#B8B8C0">（已删除的待办）</i>'}</div><span class="time-tag">🕐 ${r[id] === true ? '已勾选' : esc(String(r[id]))}</span></div>`;
+    }).join('');
+    return `<div style="font-weight:600;margin:12px 0 4px;font-size:14px">${esc(n)}</div>${items}`;
+  }).join('');
+}
+
 function boardHtml(){
   const b = boardData();
   if (!b.rows.length) return `<div class="empty-tip">今天还没有人打卡，等你第一个来 ✨</div>`;
@@ -357,6 +373,11 @@ function adminView(){
         : `<div class="empty-tip">还没添加员工，可不添加，员工打卡后会自动出现在看板</div>`}
     </div>
     <div class="card">
+      <h2>🗓 历史记录 <span class="sub">选日期查看当天谁完成了什么、几点完成</span></h2>
+      <input type="date" id="histDate" value="${todayStr()}">
+      <div id="histBody">${histHtml(todayStr())}</div>
+    </div>
+    <div class="card">
       <h2>📊 全员进度 <span class="sub">今天 ${b.checked} 人已打卡</span></h2>
       ${boardHtml()}
     </div>
@@ -379,6 +400,8 @@ function render(){
   }
   const nt = document.getElementById('newTodo');
   if (nt) nt.addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
+  const hd = document.getElementById('histDate');
+  if (hd) hd.addEventListener('change', () => { document.getElementById('histBody').innerHTML = histHtml(hd.value); });
   const nn = document.getElementById('newName');
   if (nn) nn.addEventListener('keydown', e => { if (e.key==='Enter') addName(); });
 }
