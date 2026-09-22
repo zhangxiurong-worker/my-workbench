@@ -3,171 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的工作台</title>
+<title>我的工作台 · 团队版</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   :root {
-    --primary: #FFC300;
-    --primary-dark: #E6AF00;
-    --bg: #F5F6FA;
-    --card: #FFFFFF;
-    --text: #2B2B33;
-    --text-sub: #8A8A96;
-    --red: #FF5A5F;
-    --green: #34C759;
-    --blue: #4A90D9;
-    --orange: #FF9500;
+    --primary: #FFC300; --primary-dark: #E6AF00;
+    --bg: #F5F6FA; --card: #FFFFFF;
+    --text: #2B2B33; --text-sub: #8A8A96;
+    --red: #FF5A5F; --green: #34C759; --blue: #4A90D9;
     --shadow: 0 2px 12px rgba(0,0,0,0.06);
   }
+  body { font-family: "PingFang SC","Microsoft YaHei",-apple-system,sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  body {
-    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  header { background: linear-gradient(135deg,#FFC300 0%,#FFD75E 100%); padding: 24px 20px; color: #4A3800; }
+  .header-inner { max-width: 680px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  header h1 { font-size: 22px; letter-spacing: 1px; }
+  .date-info { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  .sync-pill { font-size: 12px; background: rgba(255,255,255,0.5); padding: 6px 14px; border-radius: 16px; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .sync-pill.syncing .sync-dot { background: var(--primary-dark); animation: blink 1s infinite; }
+  .sync-pill.offline .sync-dot { background: var(--red); }
+  @keyframes blink { 50% { opacity: 0.3; } }
 
-  /* 顶部栏 */
-  header {
-    background: linear-gradient(135deg, #FFC300 0%, #FFD75E 100%);
-    padding: 28px 32px 24px;
-    color: #4A3800;
-  }
-  .header-inner {
-    max-width: 960px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  header h1 { font-size: 26px; letter-spacing: 1px; }
-  header .date-info { font-size: 14px; opacity: 0.85; margin-top: 6px; }
+  main { max-width: 680px; margin: 0 auto; padding: 18px 16px 60px; }
 
-  .greeting { font-size: 14px; background: rgba(255,255,255,0.45); padding: 8px 16px; border-radius: 20px; }
+  .card { background: var(--card); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card h2 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .sub { font-size: 12px; color: var(--text-sub); font-weight: 400; }
 
-  main { max-width: 960px; margin: 0 auto; padding: 24px 32px 60px; }
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--card); border-radius: 14px; padding: 14px; box-shadow: var(--shadow); text-align: center; }
+  .stat-card .num { font-size: 26px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 
-  /* 统计卡片 */
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--card); border-radius: 14px; padding: 18px 20px;
-    box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 4px;
-  }
-  .stat-card .num { font-size: 30px; font-weight: 700; }
-  .stat-card .label { font-size: 13px; color: var(--text-sub); }
-  .stat-card.total .num { color: var(--blue); }
-  .stat-card.doing .num { color: var(--orange); }
-  .stat-card.done .num { color: var(--green); }
-  .stat-card.overdue .num { color: var(--red); }
+  .input-row { display: flex; gap: 10px; }
+  .input-row input { flex: 1; border: 2px solid #EEEEF2; border-radius: 10px; padding: 11px 14px; font-size: 15px; outline: none; }
+  .input-row input:focus { border-color: var(--primary); }
+  .btn { background: var(--primary); color: #4A3800; border: none; border-radius: 10px; padding: 11px 22px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn:active { background: var(--primary-dark); }
+  .btn.ghost { background: #FFF3CC; }
+  .btn.small { padding: 7px 14px; font-size: 13px; }
+  .btn.danger { background: #FFECEC; color: #C0392B; }
 
-  /* 进度条 */
-  .progress-wrap { background: var(--card); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 24px; }
-  .progress-head { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
-  .progress-head b { color: var(--primary-dark); }
-  .progress-bar { height: 10px; background: #EEEEF2; border-radius: 5px; overflow: hidden; }
-  .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #FFC300, #FFB300); border-radius: 5px; transition: width 0.4s ease; width: 0; }
+  .check-item { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid #F2F2F6; cursor: pointer; }
+  .check-item:last-child { border-bottom: none; }
+  .checkbox { width: 24px; height: 24px; min-width: 24px; border: 2px solid #D5D5DD; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: transparent; font-size: 14px; transition: all .2s; }
+  .check-item.on .checkbox { background: var(--green); border-color: var(--green); color: #fff; }
+  .check-item .t { font-size: 15px; flex: 1; word-break: break-all; }
+  .check-item.on .t { color: var(--text-sub); text-decoration: line-through; }
 
-  /* 输入区 */
-  .input-card {
-    background: var(--card); border-radius: 14px; padding: 18px 20px;
-    box-shadow: var(--shadow); margin-bottom: 24px;
-  }
-  .input-row { display: flex; gap: 10px; margin-bottom: 12px; }
-  .input-row input[type="text"] {
-    flex: 1; border: 2px solid #EEEEF2; border-radius: 10px;
-    padding: 12px 14px; font-size: 15px; outline: none; transition: border-color 0.2s;
-  }
-  .input-row input[type="text"]:focus { border-color: var(--primary); }
-  .add-btn {
-    background: var(--primary); color: #4A3800; border: none; border-radius: 10px;
-    padding: 0 26px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s;
-  }
-  .add-btn:hover { background: var(--primary-dark); }
-  .meta-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
-  .meta-row label { font-size: 13px; color: var(--text-sub); display: flex; align-items: center; gap: 6px; }
-  .meta-row select, .meta-row input[type="date"] {
-    border: 1.5px solid #EEEEF2; border-radius: 8px; padding: 6px 8px; font-size: 13px;
-    outline: none; background: #FAFAFC; cursor: pointer;
-  }
-  .meta-row select:focus, .meta-row input[type="date"]:focus { border-color: var(--primary); }
+  .board-row { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid #F2F2F6; }
+  .board-row:last-child { border-bottom: none; }
+  .board-row .name { width: 76px; min-width: 76px; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board-row .bar { flex: 1; height: 10px; background: #EEEEF2; border-radius: 5px; overflow: hidden; }
+  .board-row .bar i { display: block; height: 100%; background: linear-gradient(90deg,#FFC300,#FFB300); border-radius: 5px; transition: width .4s; }
+  .board-row .pct { width: 84px; min-width: 84px; text-align: right; font-size: 13px; color: var(--text-sub); }
+  .board-row .pct b { color: var(--text); }
+  .board-row.full .bar i { background: linear-gradient(90deg,#34C759,#2DB84E); }
 
-  /* 筛选 */
-  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-  .filters { display: flex; gap: 8px; }
-  .filter-btn {
-    border: none; background: transparent; color: var(--text-sub);
-    padding: 7px 16px; border-radius: 18px; font-size: 13px; cursor: pointer; transition: all 0.2s;
-  }
-  .filter-btn.active { background: #FFF3CC; color: #8A6D00; font-weight: 600; }
-  .clear-done {
-    border: none; background: transparent; color: var(--text-sub); font-size: 13px;
-    cursor: pointer; text-decoration: underline; padding: 6px;
-  }
-  .clear-done:hover { color: var(--red); }
-
-  /* 待办列表 */
-  .todo-list { display: flex; flex-direction: column; gap: 10px; }
-  .todo-item {
-    background: var(--card); border-radius: 12px; padding: 14px 18px;
-    box-shadow: var(--shadow); display: flex; align-items: center; gap: 14px;
-    transition: transform 0.15s, opacity 0.3s; animation: slideIn 0.25s ease;
-  }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-  .todo-item:hover { transform: translateY(-2px); }
-  .todo-item.done { opacity: 0.55; }
-  .todo-item.done .todo-title { text-decoration: line-through; color: var(--text-sub); }
-
-  /* 自定义复选框 */
-  .checkbox {
-    width: 22px; height: 22px; min-width: 22px; border: 2px solid #D5D5DD; border-radius: 50%;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; color: transparent; font-size: 13px;
-  }
-  .checkbox:hover { border-color: var(--green); }
-  .checkbox.checked { background: var(--green); border-color: var(--green); color: white; }
-
-  .todo-body { flex: 1; min-width: 0; }
-  .todo-title { font-size: 15px; word-break: break-all; }
-  .todo-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .tag {
-    font-size: 11px; padding: 2px 9px; border-radius: 10px; font-weight: 500;
-  }
-  .tag.high   { background: #FFE5E5; color: #C0392B; }
-  .tag.mid    { background: #FFF3D6; color: #B8860B; }
-  .tag.low    { background: #E8F5E9; color: #2E7D32; }
-  .tag.due    { background: #EAF2FB; color: #3A6EA5; }
-  .tag.due.overdue { background: #FFE5E5; color: var(--red); }
-  .tag.due.today { background: #FFF0D6; color: #D97B00; }
-
-  .del-btn {
-    border: none; background: transparent; color: #C8C8D0; font-size: 18px;
-    cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
-  }
+  .manage-item { display: flex; align-items: center; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #F2F2F6; font-size: 14px; }
+  .manage-item:last-child { border-bottom: none; }
+  .manage-item .t { flex: 1; word-break: break-all; }
+  .del-btn { border: none; background: transparent; color: #C8C8D0; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
   .del-btn:hover { color: var(--red); background: #FFF0F0; }
 
-  .empty {
-    text-align: center; color: var(--text-sub); padding: 48px 0; font-size: 14px;
-  }
-  .empty .emoji { font-size: 40px; display: block; margin-bottom: 12px; }
-
-  /* 分类 tab */
-  .cat-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-  .cat-tab {
-    border: 1.5px solid #EEEEF2; background: var(--card); border-radius: 18px;
-    padding: 6px 16px; font-size: 13px; cursor: pointer; color: var(--text-sub); transition: all 0.2s;
-  }
-  .cat-tab.active { border-color: var(--primary); background: #FFF9E5; color: #8A6D00; font-weight: 600; }
-
-  footer { text-align: center; font-size: 12px; color: #BFBFC8; padding: 20px; }
-
-  @media (max-width: 640px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    main { padding: 16px; }
-    header { padding: 20px 16px; }
-  }
+  .screen { max-width: 400px; margin: 40px auto 0; text-align: center; }
+  .screen .emoji { font-size: 52px; display: block; margin-bottom: 14px; }
+  .screen h2 { font-size: 20px; margin-bottom: 8px; }
+  .screen p { font-size: 13px; color: var(--text-sub); margin-bottom: 22px; }
+  .role-btns { display: flex; flex-direction: column; gap: 12px; }
+  .role-btn { border: 2px solid #EEEEF2; background: var(--card); border-radius: 14px; padding: 18px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .role-btn:hover { border-color: var(--primary); background: #FFFBEF; }
+  .role-btn .desc { display: block; font-size: 12px; color: var(--text-sub); font-weight: 400; margin-top: 4px; }
+  .form-col { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+  .form-col input { border: 2px solid #EEEEF2; border-radius: 10px; padding: 12px 14px; font-size: 15px; outline: none; width: 100%; }
+  .form-col input:focus { border-color: var(--primary); }
+  .hidden { display: none !important; }
+  .loading { text-align: center; color: var(--text-sub); padding: 60px 0; font-size: 14px; }
+  .empty-tip { text-align: center; color: var(--text-sub); font-size: 13px; padding: 22px 0; }
+  .switch-link { text-align: center; margin-top: 20px; }
+  .switch-link a { color: var(--text-sub); font-size: 12px; }
+  footer { text-align: center; font-size: 11px; color: #BFBFC8; padding: 16px; }
+  .admin-tag { font-size: 11px; background: #4A3800; color: var(--primary); padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: 2px; }
 </style>
 </head>
 <body>
@@ -175,221 +92,428 @@
 <header>
   <div class="header-inner">
     <div>
-      <h1>🐾 我的工作台</h1>
+      <h1>🐾 我的工作台<span id="roleTag"></span></h1>
       <div class="date-info" id="dateInfo"></div>
     </div>
-    <div class="greeting" id="greeting"></div>
+    <div class="sync-pill" id="syncPill"><span class="sync-dot"></span><span id="syncText">连接中…</span></div>
   </div>
 </header>
 
-<main>
-  <!-- 统计 -->
-  <div class="stats">
-    <div class="stat-card total"><span class="num" id="statTotal">0</span><span class="label">全部任务</span></div>
-    <div class="stat-card doing"><span class="num" id="statDoing">0</span><span class="label">进行中</span></div>
-    <div class="stat-card done"><span class="num" id="statDone">0</span><span class="label">已完成</span></div>
-    <div class="stat-card overdue"><span class="num" id="statOverdue">0</span><span class="label">已逾期</span></div>
-  </div>
+<main id="app"><div class="loading">正在连接云端，请稍候…</div></main>
 
-  <!-- 进度 -->
-  <div class="progress-wrap">
-    <div class="progress-head"><span>完成进度</span><b id="progressText">0%</b></div>
-    <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
-  </div>
-
-  <!-- 输入 -->
-  <div class="input-card">
-    <div class="input-row">
-      <input type="text" id="todoInput" placeholder="添加新任务，按回车快速提交…" maxlength="100">
-      <button class="add-btn" onclick="addTodo()">添加</button>
-    </div>
-    <div class="meta-row">
-      <label>优先级
-        <select id="prioSelect">
-          <option value="high">🔴 高</option>
-          <option value="mid" selected>🟡 中</option>
-          <option value="low">🟢 低</option>
-        </select>
-      </label>
-      <label>分类
-        <select id="catSelect">
-          <option value="工作" selected>工作</option>
-          <option value="学习">学习</option>
-          <option value="生活">生活</option>
-          <option value="其他">其他</option>
-        </select>
-      </label>
-      <label>截止日期 <input type="date" id="dueInput"></label>
-    </div>
-  </div>
-
-  <!-- 筛选 -->
-  <div class="toolbar">
-    <div class="cat-bar" id="catBar"></div>
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">全部</button>
-      <button class="filter-btn" data-filter="doing">进行中</button>
-      <button class="filter-btn" data-filter="done">已完成</button>
-      <button class="clear-done" onclick="clearDone()">清空已完成</button>
-    </div>
-  </div>
-
-  <!-- 列表 -->
-  <div class="todo-list" id="todoList"></div>
-</main>
-
-<footer>数据保存在浏览器本地，请勿清除浏览器缓存 · 刷新页面数据不丢失</footer>
+<footer>多人实时同步 · 数据存储于云端 · 遇到问题找管理员</footer>
 
 <script>
-const STORE_KEY = 'my-workbench-todos';
-let todos = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
-let filter = 'all';
-let catFilter = '全部';
+/* ================== 配置 ================== */
+const OWNER='zhangxiurong-worker', REPO='my-workbench', BRANCH='main', FILE='data.json';
+const TOKEN='${{3JgWAMJ65SqOssUIRh5jnq3Oaql}}';
+const API=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
+const PROFILE_KEY='wb-team-profile';
 
-function save() { localStorage.setItem(STORE_KEY, JSON.stringify(todos)); }
+/* ================== 状态 ================== */
+let state = { todos:[], records:{}, roster:[], adminPass:null };
+let sha = null;
+let profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
+let syncing = false, pendingPush = false, pushTimer = null;
+let adminAuthed = false;
 
-function todayStr() {
+const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ================== 云端读写 ================== */
+function b64encode(s){ return btoa(unescape(encodeURIComponent(s))); }
+function b64decode(s){ return decodeURIComponent(escape(atob(s.replace(/\s/g,'')))); }
+
+async function apiGet(){
+  const r = await fetch(API+'?t='+Date.now(), {
+    headers: { 'Authorization':'Bearer '+TOKEN, 'Accept':'application/vnd.github+json' }
+  });
+  if (r.status === 404) return null;
+  if (r.status === 403) throw new Error('API限流，请稍后再试');
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  sha = j.sha;
+  return JSON.parse(b64decode(j.content));
 }
 
-/* ---------- 顶部日期与问候 ---------- */
-function renderHeader() {
+async function apiPut(data){
+  const body = {
+    message: 'sync ' + new Date().toLocaleString('zh-CN'),
+    content: b64encode(JSON.stringify(data)),
+    branch: BRANCH
+  };
+  if (sha) body.sha = sha;
+  const r = await fetch(API, {
+    method: 'PUT',
+    headers: { 'Authorization':'Bearer '+TOKEN, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (r.status === 409) throw new Error('conflict');
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  const j = await r.json();
+  sha = j.content.sha;
+}
+
+function myRow(){
+  return ((state.records[todayStr()] || {})[myName()]) || null;
+}
+function myName(){ return profile && profile.role==='staff' ? profile.name : 'admin'; }
+
+function captureMine(){
+  const row = myRow();
+  return row ? JSON.parse(JSON.stringify(row)) : {};
+}
+
+/* 拉取远端并合并（本地自己今天的勾选优先） */
+async function pull(){
+  try {
+    const remote = await apiGet();
+    const mine = profile ? captureMine() : {};
+    if (remote) {
+      const localTodos = profile && profile.role==='admin' && adminAuthed ? state.todos : null;
+      state.records = remote.records || {};
+      state.todos = localTodos || remote.todos || [];
+      state.roster = (profile && profile.role==='admin' && adminAuthed) ? state.roster : (remote.roster || []);
+      if (!(profile && profile.role==='admin' && adminAuthed)) state.adminPass = remote.adminPass || null;
+    }
+    if (profile) {
+      state.records[todayStr()] = state.records[todayStr()] || {};
+      if (Object.keys(mine).length) state.records[todayStr()][myName()] = Object.assign(state.records[todayStr()][myName()] || {}, mine);
+    }
+    setSync('ok');
+  } catch (e) {
+    setSync('offline');
+  }
+  render();
+}
+
+/* 推送：读远端最新 → 覆盖自己的部分 → 写回 */
+async function push(){
+  if (syncing) { pendingPush = true; return; }
+  syncing = true; setSync('syncing');
+  const mine = captureMine();
+  const localState = JSON.parse(JSON.stringify(state));
+  for (let i = 0; i < 4; i++) {
+    try {
+      const remote = await apiGet();
+      let out;
+      if (remote) {
+        out = remote;
+        out.records = out.records || {};
+        out.records[todayStr()] = out.records[todayStr()] || {};
+        if (profile && profile.role==='staff') {
+          out.records[todayStr()][profile.name] = Object.assign(out.records[todayStr()][profile.name] || {}, mine);
+        } else {
+          out.records[todayStr()] = localState.records[todayStr()] || out.records[todayStr()];
+          out.todos = localState.todos;
+          out.roster = localState.roster;
+          if (localState.adminPass) out.adminPass = localState.adminPass;
+        }
+      } else {
+        out = localState;
+      }
+      await apiPut(out);
+      syncing = false; setSync('ok');
+      if (pendingPush) { pendingPush = false; push(); }
+      return;
+    } catch (e) {
+      if (i === 3) { syncing = false; setSync('offline'); if (pendingPush) { pendingPush = false; setTimeout(push, 5000); } }
+      else await sleep(1200);
+    }
+  }
+}
+
+function schedulePush(){
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(push, 500);
+}
+
+function setSync(st){
+  const pill = document.getElementById('syncPill');
+  const txt = document.getElementById('syncText');
+  pill.className = 'sync-pill';
+  if (st === 'ok') { txt.textContent = '已同步'; }
+  else if (st === 'syncing') { pill.classList.add('syncing'); txt.textContent = '同步中…'; }
+  else { pill.classList.add('offline'); txt.textContent = '连接失败，重试中'; }
+}
+
+/* ================== 渲染 ================== */
+function renderHeader(){
   const d = new Date();
   const weeks = ['日','一','二','三','四','五','六'];
   document.getElementById('dateInfo').textContent =
     `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · 星期${weeks[d.getDay()]}`;
-  const h = d.getHours();
-  let g = h < 6 ? '夜深了，注意休息 🌙' : h < 12 ? '早上好，元气满满！☀️' :
-          h < 14 ? '中午好，记得吃饭 🍚' : h < 18 ? '下午好，继续加油 💪' : '晚上好，辛苦了 🌆';
-  document.getElementById('greeting').textContent = g;
+  document.getElementById('roleTag').innerHTML =
+    profile ? (profile.role==='admin' ? '<span class="admin-tag">管理员</span>' : `<span class="admin-tag">${esc(profile.name)}</span>`) : '';
 }
 
-/* ---------- 增删改 ---------- */
-function addTodo() {
-  const input = document.getElementById('todoInput');
-  const text = input.value.trim();
-  if (!text) { input.focus(); return; }
-  todos.unshift({
-    id: Date.now(),
-    text,
-    done: false,
-    priority: document.getElementById('prioSelect').value,
-    cat: document.getElementById('catSelect').value,
-    due: document.getElementById('dueInput').value || '',
-    createdAt: todayStr()
-  });
-  input.value = '';
-  document.getElementById('dueInput').value = '';
-  save(); render();
-}
-
-function toggleTodo(id) {
-  const t = todos.find(t => t.id === id);
-  if (t) { t.done = !t.done; save(); render(); }
-}
-
-function delTodo(id) {
-  todos = todos.filter(t => t.id !== id);
-  save(); render();
-}
-
-function clearDone() {
-  todos = todos.filter(t => !t.done);
-  save(); render();
-}
-
-/* ---------- 渲染 ---------- */
-const prioLabel = { high: '高优先', mid: '中优先', low: '低优先' };
-
-function dueTag(t) {
-  if (!t.due) return '';
+function boardData(){
   const today = todayStr();
-  if (!t.done && t.due < today) return `<span class="tag due overdue">逾期 · ${t.due.slice(5)}</span>`;
-  if (!t.done && t.due === today) return `<span class="tag due today">今天截止</span>`;
-  return `<span class="tag due">截止 ${t.due.slice(5)}</span>`;
-}
-
-function render() {
-  renderHeader();
-
-  /* 统计 */
-  const total = todos.length;
-  const done = todos.filter(t => t.done).length;
-  const today = todayStr();
-  const overdue = todos.filter(t => !t.done && t.due && t.due < today).length;
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statDoing').textContent = total - done;
-  document.getElementById('statDone').textContent = done;
-  document.getElementById('statOverdue').textContent = overdue;
-  const pct = total ? Math.round(done / total * 100) : 0;
-  document.getElementById('progressText').textContent = pct + '%';
-  document.getElementById('progressFill').style.width = pct + '%';
-
-  /* 分类 tab */
-  const cats = ['全部', ...new Set(todos.map(t => t.cat))];
-  document.getElementById('catBar').innerHTML = cats.map(c =>
-    `<button class="cat-tab ${c === catFilter ? 'active' : ''}" onclick="setCatFilter('${c}')">${c}</button>`
-  ).join('');
-
-  /* 列表 */
-  let list = todos.filter(t => {
-    if (filter === 'doing' && t.done) return false;
-    if (filter === 'done' && !t.done) return false;
-    if (catFilter !== '全部' && t.cat !== catFilter) return false;
-    return true;
-  });
-  /* 排序：未完成在前，高优先在前 */
-  list.sort((a, b) => {
-    if (a.done !== b.done) return a.done ? 1 : -1;
-    const po = { high: 0, mid: 1, low: 2 };
-    if (po[a.priority] !== po[b.priority]) return po[a.priority] - po[b.priority];
-    return b.id - a.id;
-  });
-
-  const el = document.getElementById('todoList');
-  if (!list.length) {
-    el.innerHTML = `<div class="empty"><span class="emoji">🎉</span>${total ? '当前筛选下没有任务' : '太棒了，暂无待办！去添加一个新任务吧'}</div>`;
-    return;
+  const rec = state.records[today] || {};
+  const total = state.todos.length;
+  const names = new Set([...(state.roster||[]), ...Object.keys(rec)]);
+  const rows = [];
+  for (const n of names) {
+    const r = rec[n] || {};
+    const done = state.todos.filter(t => r[t.id]).length;
+    rows.push({ name:n, done, total, pct: total ? done/total : 0 });
   }
-  el.innerHTML = list.map(t => `
-    <div class="todo-item ${t.done ? 'done' : ''}">
-      <div class="checkbox ${t.done ? 'checked' : ''}" onclick="toggleTodo(${t.id})">✓</div>
-      <div class="todo-body">
-        <div class="todo-title">${escapeHtml(t.text)}</div>
-        <div class="todo-tags">
-          <span class="tag ${t.priority}">${prioLabel[t.priority]}</span>
-          <span class="tag mid">${t.cat}</span>
-          ${dueTag(t)}
-        </div>
-      </div>
-      <button class="del-btn" title="删除" onclick="delTodo(${t.id})">✕</button>
+  rows.sort((a,b) => b.pct - a.pct || b.done - a.done);
+  const checked = rows.filter(r => r.done > 0).length;
+  const avg = rows.length ? rows.reduce((s,r)=>s+r.pct,0)/rows.length : 0;
+  return { rows, checked, avg, total };
+}
+
+function boardHtml(){
+  const b = boardData();
+  if (!b.rows.length) return `<div class="empty-tip">今天还没有人打卡，等你第一个来 ✨</div>`;
+  return b.rows.map(r => `
+    <div class="board-row ${r.total && r.done===r.total ? 'full':''}">
+      <span class="name">${esc(r.name)}</span>
+      <div class="bar"><i style="width:${Math.round(r.pct*100)}%"></i></div>
+      <span class="pct"><b>${r.done}/${r.total}</b> · ${Math.round(r.pct*100)}%</span>
+    </div>`).join('');
+}
+
+function staffView(){
+  const today = todayStr();
+  const rec = state.records[today] || {};
+  const mine = rec[profile.name] || {};
+  const todos = state.todos;
+  const done = todos.filter(t => mine[t.id]).length;
+  const pct = todos.length ? Math.round(done/todos.length*100) : 0;
+  return `
+    <div class="stats">
+      <div class="stat-card"><span class="num">${todos.length}</span><span class="label">今日待办</span></div>
+      <div class="stat-card"><span class="num" style="color:var(--green)">${done}</span><span class="label">已完成</span></div>
+      <div class="stat-card"><span class="num" style="color:var(--blue)">${pct}%</span><span class="label">我的完成率</span></div>
     </div>
-  `).join('');
+    <div class="card">
+      <h2>✅ 今日待办 <span class="sub">点一下打勾，自动同步</span></h2>
+      ${todos.length ? todos.map(t => `
+        <div class="check-item ${mine[t.id]?'on':''}" onclick="toggleTodo('${t.id}')">
+          <div class="checkbox">✓</div><div class="t">${esc(t.title)}</div>
+        </div>`).join('') : `<div class="empty-tip">管理员还没有发布今日待办</div>`}
+    </div>
+    <div class="card">
+      <h2>📊 全员进度 <span class="sub">实时更新</span></h2>
+      ${boardHtml()}
+    </div>
+    <div class="switch-link"><a href="javascript:switchProfile()">切换身份 / 换个名字</a></div>`;
 }
 
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function adminView(){
+  const b = boardData();
+  return `
+    <div class="stats">
+      <div class="stat-card"><span class="num">${b.checked}</span><span class="label">今日打卡人数</span></div>
+      <div class="stat-card"><span class="num" style="color:var(--blue)">${b.total}</span><span class="label">今日待办数</span></div>
+      <div class="stat-card"><span class="num" style="color:var(--green)">${Math.round(b.avg*100)}%</span><span class="label">平均完成率</span></div>
+    </div>
+    <div class="card">
+      <h2>➕ 新建待办 <span class="sub">发布后员工立即可见</span></h2>
+      <div class="input-row">
+        <input type="text" id="newTodo" placeholder="输入待办内容，回车快速发布…" maxlength="80">
+        <button class="btn" onclick="addTodo()">发布</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>📋 待办管理 <span class="sub">${state.todos.length} 项</span></h2>
+      ${state.todos.length ? state.todos.map(t => `
+        <div class="manage-item">
+          <div class="t">${esc(t.title)}</div>
+          <button class="del-btn" title="删除" onclick="delTodo('${t.id}')">✕</button>
+        </div>`).join('') : `<div class="empty-tip">暂无待办，先发布一条吧</div>`}
+    </div>
+    <div class="card">
+      <h2>👥 员工名单 <span class="sub">看板会显示名单里每个人的进度</span></h2>
+      <div class="input-row" style="margin-bottom:8px">
+        <input type="text" id="newName" placeholder="输入员工姓名…" maxlength="20">
+        <button class="btn ghost" onclick="addName()">添加</button>
+      </div>
+      ${(state.roster||[]).length ? state.roster.map(n => `
+        <div class="manage-item"><div class="t">${esc(n)}</div>
+        <button class="del-btn" onclick="delName('${esc(n)}')">✕</button></div>`).join('')
+        : `<div class="empty-tip">还没添加员工，可不添加，员工打卡后会自动出现在看板</div>`}
+    </div>
+    <div class="card">
+      <h2>📊 全员进度 <span class="sub">今天 ${b.checked} 人已打卡</span></h2>
+      ${boardHtml()}
+    </div>
+    <div class="switch-link"><a href="javascript:switchProfile()">退出管理员</a></div>`;
 }
 
-function setCatFilter(c) { catFilter = c; render(); }
+function render(){
+  renderHeader();
+  const app = document.getElementById('app');
+  if (!profile) { app.innerHTML = roleHtml(); return; }
+  if (profile.role === 'staff') { app.innerHTML = staffView(); return; }
+  /* admin */
+  if (!adminAuthed) { app.innerHTML = adminGateHtml(); return; }
+  app.innerHTML = adminView();
+  const nt = document.getElementById('newTodo');
+  if (nt) nt.addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
+  const nn = document.getElementById('newName');
+  if (nn) nn.addEventListener('keydown', e => { if (e.key==='Enter') addName(); });
+}
 
-/* 事件绑定 */
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    filter = btn.dataset.filter;
+/* ================== 初始界面 ================== */
+function roleHtml(){
+  return `<div class="screen">
+    <span class="emoji">🐾</span>
+    <h2>欢迎使用团队工作台</h2>
+    <p>同一个链接，员工打卡、老板看进度，数据实时同步</p>
+    <div class="role-btns">
+      <button class="role-btn" onclick="chooseRole('staff')">🙋 我是员工<span class="desc">查看今日待办，完成打勾</span></button>
+      <button class="role-btn" onclick="chooseRole('admin')">👑 我是管理员<span class="desc">发布待办，查看全员完成进度</span></button>
+    </div>
+  </div>`;
+}
+
+function staffNameHtml(){
+  return `<div class="screen">
+    <span class="emoji">🙋</span>
+    <h2>输入你的姓名</h2>
+    <p>姓名会显示在全员进度里，请输入真实姓名</p>
+    <div class="form-col">
+      <input type="text" id="nameInput" placeholder="例如：张三" maxlength="20">
+      <button class="btn" onclick="saveName()">进入工作台</button>
+    </div>
+    <div class="switch-link"><a href="javascript:switchProfile()">返回</a></div>
+  </div>`;
+}
+
+function adminGateHtml(){
+  if (!state.adminPass) {
+    return `<div class="screen">
+      <span class="emoji">👑</span>
+      <h2>设置管理密码</h2>
+      <p>你是第一位管理员，请设置一个管理密码（下次进入需输入）</p>
+      <div class="form-col">
+        <input type="password" id="passInput" placeholder="设置管理密码" maxlength="30">
+        <button class="btn" onclick="setPass()">保存并进入</button>
+      </div>
+      <div class="switch-link"><a href="javascript:switchProfile()">返回</a></div>
+    </div>`;
+  }
+  return `<div class="screen">
+    <span class="emoji">🔒</span>
+    <h2>请输入管理密码</h2>
+    <p>进入管理员模式需要验证</p>
+    <div class="form-col">
+      <input type="password" id="passInput" placeholder="管理密码" maxlength="30">
+      <button class="btn" onclick="checkPass()">进入</button>
+    </div>
+    <div class="switch-link"><a href="javascript:switchProfile()">返回</a></div>
+  </div>`;
+}
+
+/* ================== 动作 ================== */
+window.chooseRole = function(role){
+  profile = { role };
+  if (role === 'staff') {
+    document.getElementById('app').innerHTML = staffNameHtml();
+    document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
+    document.getElementById('nameInput').focus();
+  } else {
     render();
-  });
-});
-document.getElementById('todoInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addTodo();
-});
-/* 默认截止日期为今天 */
-document.getElementById('dueInput').value = todayStr();
+    const p = document.getElementById('passInput');
+    if (p) { p.addEventListener('keydown', e => { if (e.key==='Enter') state.adminPass ? checkPass() : setPass(); }); p.focus(); }
+  }
+};
 
-render();
+window.saveName = function(){
+  const v = document.getElementById('nameInput').value.trim();
+  if (!v) return;
+  profile.name = v;
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  pull();
+};
+
+window.switchProfile = function(){
+  profile = null; adminAuthed = false;
+  localStorage.removeItem(PROFILE_KEY);
+  render();
+};
+
+window.setPass = async function(){
+  const v = document.getElementById('passInput').value.trim();
+  if (!v) return;
+  state.adminPass = v;
+  adminAuthed = true;
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  render();
+  await push();
+};
+
+window.checkPass = function(){
+  const v = document.getElementById('passInput').value.trim();
+  if (v === state.adminPass) {
+    adminAuthed = true;
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    render();
+  } else {
+    alert('密码不对，再试试');
+  }
+};
+
+window.toggleTodo = function(id){
+  if (!profile || profile.role !== 'staff') return;
+  const today = todayStr();
+  state.records[today] = state.records[today] || {};
+  state.records[today][profile.name] = state.records[today][profile.name] || {};
+  const row = state.records[today][profile.name];
+  if (row[id]) delete row[id]; else row[id] = true;
+  render();
+  schedulePush();
+};
+
+window.addTodo = async function(){
+  const v = document.getElementById('newTodo').value.trim();
+  if (!v) return;
+  state.todos.unshift({ id: String(Date.now()), title: v, createdAt: todayStr() });
+  document.getElementById('newTodo').value = '';
+  render();
+  await push();
+};
+
+window.delTodo = async function(id){
+  if (!confirm('删除这条待办？员工已勾选的记录会保留')) return;
+  state.todos = state.todos.filter(t => t.id !== id);
+  render();
+  await push();
+};
+
+window.addName = async function(){
+  const v = document.getElementById('newName').value.trim();
+  if (!v) return;
+  if (!state.roster.includes(v)) state.roster.push(v);
+  document.getElementById('newName').value = '';
+  render();
+  await push();
+};
+
+window.delName = async function(n){
+  state.roster = state.roster.filter(x => x !== n);
+  render();
+  await push();
+};
+
+/* ================== 启动 ================== */
+(async function boot(){
+  await pull();
+  /* 员工首次进入且还没输姓名 */
+  if (profile && profile.role === 'staff' && !profile.name) {
+    document.getElementById('app').innerHTML = staffNameHtml();
+    document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
+  }
+  setInterval(pull, 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
+})();
 </script>
 </body>
 </html>
