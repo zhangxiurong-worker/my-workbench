@@ -67,6 +67,10 @@
   .del-btn { border: none; background: transparent; color: #C8C8D0; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
   .del-btn:hover { color: var(--red); background: #FFF0F0; }
 
+  .input-row select { border: 2px solid #EEEEF2; border-radius: 10px; padding: 11px 8px; font-size: 14px; outline: none; background: #FAFAFC; max-width: 120px; }
+  .input-row select:focus { border-color: var(--primary); }
+  .assign-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #EAF2FB; color: #3A6EA5; white-space: nowrap; margin-left: 6px; }
+
   .screen { max-width: 400px; margin: 40px auto 0; text-align: center; }
   .screen .emoji { font-size: 52px; display: block; margin-bottom: 14px; }
   .screen h2 { font-size: 20px; margin-bottom: 8px; }
@@ -259,7 +263,9 @@ function boardData(){
   const rows = [];
   for (const n of names) {
     const r = rec[n] || {};
-    const done = state.todos.filter(t => r[t.id]).length;
+    const my = state.todos.filter(t => t.assign === 'all' || t.assign === n);
+    const done = my.filter(t => r[t.id]).length;
+    const total = my.length;
     rows.push({ name:n, done, total, pct: total ? done/total : 0 });
   }
   rows.sort((a,b) => b.pct - a.pct || b.done - a.done);
@@ -283,7 +289,7 @@ function staffView(){
   const today = todayStr();
   const rec = state.records[today] || {};
   const mine = rec[profile.name] || {};
-  const todos = state.todos;
+  const todos = state.todos.filter(t => t.assign === 'all' || t.assign === profile.name);
   const done = todos.filter(t => mine[t.id]).length;
   const pct = todos.length ? Math.round(done/todos.length*100) : 0;
   return `
@@ -296,8 +302,8 @@ function staffView(){
       <h2>✅ 今日待办 <span class="sub">点一下打勾，自动同步</span></h2>
       ${todos.length ? todos.map(t => `
         <div class="check-item ${mine[t.id]?'on':''}" onclick="toggleTodo('${t.id}')">
-          <div class="checkbox">✓</div><div class="t">${esc(t.title)}</div>
-        </div>`).join('') : `<div class="empty-tip">管理员还没有发布今日待办</div>`}
+          <div class="checkbox">✓</div><div class="t">${t.assign === 'all' ? esc(t.title) : `<span class="assign-tag">${esc(t.assign)}安排</span> ${esc(t.title)}`}</div>
+        </div>`).join('') : `<div class="empty-tip">今天还没有分配给你的待办</div>`}
     </div>
     <div class="card">
       <h2>📊 全员进度 <span class="sub">实时更新</span></h2>
@@ -316,16 +322,17 @@ function adminView(){
     </div>
     <div class="card">
       <h2>➕ 新建待办 <span class="sub">发布后员工立即可见</span></h2>
-      <div class="input-row">
-        <input type="text" id="newTodo" placeholder="输入待办内容，回车快速发布…" maxlength="80">
-        <button class="btn" onclick="addTodo()">发布</button>
-      </div>
+        <div class="input-row">
+          <input type="text" id="newTodo" placeholder="输入待办内容，回车快速发布…" maxlength="80">
+          <select id="assignSelect"></select>
+          <button class="btn" onclick="addTodo()">发布</button>
+        </div>
     </div>
     <div class="card">
       <h2>📋 待办管理 <span class="sub">${state.todos.length} 项</span></h2>
       ${state.todos.length ? state.todos.map(t => `
         <div class="manage-item">
-          <div class="t">${esc(t.title)}</div>
+          <div class="t">${esc(t.title)}<span class="assign-tag">${t.assign === 'all' ? '全员' : esc(t.assign)}</span></div>
           <button class="del-btn" title="删除" onclick="delTodo('${t.id}')">✕</button>
         </div>`).join('') : `<div class="empty-tip">暂无待办，先发布一条吧</div>`}
     </div>
@@ -355,6 +362,12 @@ function render(){
   /* admin */
   if (!adminAuthed) { app.innerHTML = adminGateHtml(); return; }
   app.innerHTML = adminView();
+  const as = document.getElementById('assignSelect');
+  if (as) {
+    let opts = '<option value="all">👥 全员</option>';
+    (state.roster || []).forEach(n => opts += `<option value="${esc(n)}">${esc(n)}</option>`);
+    as.innerHTML = opts;
+  }
   const nt = document.getElementById('newTodo');
   if (nt) nt.addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
   const nn = document.getElementById('newName');
@@ -475,7 +488,9 @@ window.toggleTodo = function(id){
 window.addTodo = async function(){
   const v = document.getElementById('newTodo').value.trim();
   if (!v) return;
-  state.todos.unshift({ id: String(Date.now()), title: v, createdAt: todayStr() });
+  const as = document.getElementById('assignSelect');
+  const assign = as ? as.value : 'all';
+  state.todos.unshift({ id: String(Date.now()), title: v, assign, createdAt: todayStr() });
   document.getElementById('newTodo').value = '';
   render();
   await push();
