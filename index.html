@@ -70,6 +70,7 @@
   .input-row select { border: 2px solid #EEEEF2; border-radius: 10px; padding: 11px 8px; font-size: 14px; outline: none; background: #FAFAFC; max-width: 120px; }
   .input-row select:focus { border-color: var(--primary); }
   .assign-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #EAF2FB; color: #3A6EA5; white-space: nowrap; margin-left: 6px; }
+  .time-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #E8F5E9; color: #2E7D32; white-space: nowrap; margin-left: 6px; }
 
   .screen { max-width: 400px; margin: 40px auto 0; text-align: center; }
   .screen .emoji { font-size: 52px; display: block; margin-bottom: 14px; }
@@ -121,10 +122,16 @@ let profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
 let syncing = false, pendingPush = false, pushTimer = null;
 let adminAuthed = false;
 
-const todayStr = () => {
+/* 营业日：早 6 点前算前一天，每天 6:00 自动进入新的一天、进度清零 */
+function todayStr() {
   const d = new Date();
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-};
+}
+function nowTime() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -266,7 +273,9 @@ function boardData(){
     const my = state.todos.filter(t => t.assign === 'all' || t.assign === n);
     const done = my.filter(t => r[t.id]).length;
     const total = my.length;
-    rows.push({ name:n, done, total, pct: total ? done/total : 0 });
+    let last = null;
+    for (const k in r) { if (typeof r[k] === 'string' && r[k] > (last||'')) last = r[k]; }
+    rows.push({ name:n, done, total, pct: total ? done/total : 0, last });
   }
   rows.sort((a,b) => b.pct - a.pct || b.done - a.done);
   const checked = rows.filter(r => r.done > 0).length;
@@ -281,7 +290,7 @@ function boardHtml(){
     <div class="board-row ${r.total && r.done===r.total ? 'full':''}">
       <span class="name">${esc(r.name)}</span>
       <div class="bar"><i style="width:${Math.round(r.pct*100)}%"></i></div>
-      <span class="pct"><b>${r.done}/${r.total}</b> · ${Math.round(r.pct*100)}%</span>
+      <span class="pct"><b>${r.done}/${r.total}</b> · ${Math.round(r.pct*100)}%${r.last ? ` · 🕐${r.last}` : ''}</span>
     </div>`).join('');
 }
 
@@ -302,7 +311,7 @@ function staffView(){
       <h2>✅ 今日待办 <span class="sub">点一下打勾，自动同步</span></h2>
       ${todos.length ? todos.map(t => `
         <div class="check-item ${mine[t.id]?'on':''}" onclick="toggleTodo('${t.id}')">
-          <div class="checkbox">✓</div><div class="t">${t.assign === 'all' ? esc(t.title) : `<span class="assign-tag">${esc(t.assign)}安排</span> ${esc(t.title)}`}</div>
+          <div class="checkbox">✓</div><div class="t">${esc(t.title)}${mine[t.id] && mine[t.id] !== true ? `<span class="time-tag">🕐 ${esc(mine[t.id])}</span>` : ''}</div>
         </div>`).join('') : `<div class="empty-tip">今天还没有分配给你的待办</div>`}
     </div>
     <div class="card">
@@ -480,7 +489,7 @@ window.toggleTodo = function(id){
   state.records[today] = state.records[today] || {};
   state.records[today][profile.name] = state.records[today][profile.name] || {};
   const row = state.records[today][profile.name];
-  if (row[id]) delete row[id]; else row[id] = true;
+  if (row[id]) delete row[id]; else row[id] = nowTime();
   render();
   schedulePush();
 };
@@ -526,7 +535,7 @@ window.delName = async function(n){
     document.getElementById('app').innerHTML = staffNameHtml();
     document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
   }
-  setInterval(pull, 30000);
+  setInterval(pull, 15000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
 })();
 </script>
