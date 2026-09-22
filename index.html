@@ -162,6 +162,11 @@ const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function b64encode(s){ return btoa(unescape(encodeURIComponent(s))); }
 function b64decode(s){ return decodeURIComponent(escape(atob(s.replace(/\s/g,'')))); }
 
+async function hashPin(p){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('wb-salt-2026:' + p));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 async function apiGet(){
   const r = await fetch(API+'?t='+Date.now(), {
     headers: { 'Authorization':'Bearer '+TOKEN, 'Accept':'application/vnd.github+json' }
@@ -208,11 +213,14 @@ async function pull(){
     const remote = await apiGet();
     const mine = profile ? captureMine() : {};
     if (remote) {
-      const localTodos = profile && profile.role==='admin' && adminAuthed ? state.todos : null;
+      const adminKeep = profile && profile.role==='admin' && adminAuthed;
+      const localTodos = adminKeep ? state.todos : null;
+      const localPins = adminKeep ? state.pins : null;
       state.records = remote.records || {};
       state.todos = localTodos || remote.todos || [];
-      state.roster = (profile && profile.role==='admin' && adminAuthed) ? state.roster : (remote.roster || []);
-      if (!(profile && profile.role==='admin' && adminAuthed)) state.adminPass = remote.adminPass || null;
+      state.roster = adminKeep ? state.roster : (remote.roster || []);
+      state.pins = localPins || remote.pins || {};
+      if (!adminKeep) state.adminPass = remote.adminPass || null;
     }
     if (profile) {
       state.records[todayStr()] = state.records[todayStr()] || {};
@@ -241,10 +249,13 @@ async function push(){
         out.records[todayStr()] = out.records[todayStr()] || {};
         if (profile && profile.role==='staff') {
           out.records[todayStr()][profile.name] = Object.assign(out.records[todayStr()][profile.name] || {}, mine);
+          out.pins = out.pins || {};
+          if (state.pins && state.pins[profile.name]) out.pins[profile.name] = state.pins[profile.name];
         } else {
           out.records[todayStr()] = localState.records[todayStr()] || out.records[todayStr()];
           out.todos = localState.todos;
           out.roster = localState.roster;
+          out.pins = localState.pins || out.pins || {};
           if (localState.adminPass) out.adminPass = localState.adminPass;
         }
       } else {
@@ -392,13 +403,14 @@ function adminView(){
         </div>`).join('') : `<div class="empty-tip">暂无待办，先发布一条吧</div>`}
     </div>
     <div class="card">
-      <h2>👥 员工名单 <span class="sub">看板会显示名单里每个人的进度</span></h2>
+      <h2>👥 员工名单 <span class="sub">员工首次进入自己设密码，忘记可在此重置</span></h2>
       <div class="input-row" style="margin-bottom:8px">
         <input type="text" id="newName" placeholder="输入员工姓名…" maxlength="20">
         <button class="btn ghost" onclick="addName()">添加</button>
       </div>
       ${(state.roster||[]).length ? state.roster.map(n => `
         <div class="manage-item"><div class="t">${esc(n)}</div>
+        <button class="btn small ghost" style="padding:4px 10px;font-size:12px" onclick="resetPin('${esc(n)}')">重置密码</button>
         <button class="del-btn" onclick="delName('${esc(n)}')">✕</button></div>`).join('')
         : `<div class="empty-tip">还没添加员工，可不添加，员工打卡后会自动出现在看板</div>`}
     </div>
@@ -418,7 +430,13 @@ function render(){
   renderHeader();
   const app = document.getElementById('app');
   if (!profile) { app.innerHTML = roleHtml(); return; }
-  if (profile.role === 'staff') { app.innerHTML = staffView(); return; }
+  if (profile.role === 'staff') {
+    if (!profile.verified) {
+      if (!document.getElementById('pinInput')) { app.innerHTML = pinScreenHtml(); const p = document.getElementById('pinInput'); if (p) p.addEventListener('keydown', e => { if (e.key==='Enter') (state.pins && state.pins[profile.name]) ? staffLogin() : staffSetPin(); }); }
+      return;
+    }
+    app.innerHTML = staffView(); return;
+  }
   /* admin */
   if (!adminAuthed) { app.innerHTML = adminGateHtml(); return; }
   app.innerHTML = adminView();
@@ -448,13 +466,38 @@ function staffNameHtml(){
   return `<div class="screen">
     <span class="emoji">🙋</span>
     <h2>输入你的姓名</h2>
-    <p>姓名会显示在全员进度里，请输入真实姓名</p>
+    <p>姓名会显示在全员进度里，请输入真实姓名（下一步设置专属密码）</p>
     <div class="form-col">
       <input type="text" id="nameInput" placeholder="例如：张三" maxlength="20">
-      <button class="btn" onclick="saveName()">进入工作台</button>
+      <button class="btn" onclick="saveName()">下一步</button>
     </div>
     <div class="switch-link"><a href="javascript:switchProfile()">返回</a></div>
   </div>`;
+}
+
+function pinScreenHtml(){
+  const hasPin = state.pins && state.pins[profile.name];
+  return hasPin
+    ? `<div class="screen">
+        <span class="emoji">🔐</span>
+        <h2>欢迎回来，${esc(profile.name)}</h2>
+        <p>请输入你的密码进入（防止别人冒用）</p>
+        <div class="form-col">
+          <input type="password" id="pinInput" placeholder="你的密码" maxlength="20">
+          <button class="btn" onclick="staffLogin()">进入</button>
+        </div>
+        <div class="switch-link"><a href="javascript:switchProfile()">换个身份</a></div>
+      </div>`
+    : `<div class="screen">
+        <span class="emoji">🔑</span>
+        <h2>${esc(profile.name)}，设置你的专属密码</h2>
+        <p>首次使用，设置一个至少 4 位的密码，以后每次进入都要输入，防止别人冒用你的名字</p>
+        <div class="form-col">
+          <input type="password" id="pinInput" placeholder="设置密码（至少4位）" maxlength="20">
+          <button class="btn" onclick="staffSetPin()">确认并进入</button>
+        </div>
+        <div class="switch-link"><a href="javascript:switchProfile()">换个身份</a></div>
+      </div>`;
 }
 
 function adminGateHtml(){
@@ -499,9 +542,44 @@ window.chooseRole = function(role){
 window.saveName = function(){
   const v = document.getElementById('nameInput').value.trim();
   if (!v) return;
-  profile.name = v;
+  profile = { role:'staff', name: v };
+  render();
+  const p = document.getElementById('pinInput');
+  if (p) { p.addEventListener('keydown', e => { if (e.key==='Enter') (state.pins && state.pins[v]) ? staffLogin() : staffSetPin(); }); p.focus(); }
+};
+
+window.staffLogin = async function(){
+  const v = document.getElementById('pinInput').value.trim();
+  if (!v) return;
+  const h = await hashPin(v);
+  if (state.pins && state.pins[profile.name] === h) {
+    profile.verified = true;
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    pull();
+  } else {
+    alert('密码不对，请重试；忘记密码找管理员重置');
+  }
+};
+
+window.staffSetPin = async function(){
+  const v = document.getElementById('pinInput').value.trim();
+  if (v.length < 4) { alert('密码至少 4 位'); return; }
+  state.pins = state.pins || {};
+  state.pins[profile.name] = await hashPin(v);
+  profile.verified = true;
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-  pull();
+  render();
+  await push();
+};
+
+window.resetPin = async function(n){
+  const v = prompt('给「' + n + '」设置新密码（至少 4 位）：');
+  if (!v) return;
+  if (v.length < 4) { alert('密码至少 4 位'); return; }
+  state.pins = state.pins || {};
+  state.pins[n] = await hashPin(v);
+  render();
+  await push();
 };
 
 window.switchProfile = function(){
@@ -513,16 +591,18 @@ window.switchProfile = function(){
 window.setPass = async function(){
   const v = document.getElementById('passInput').value.trim();
   if (!v) return;
-  state.adminPass = v;
+  state.adminPass = await hashPin('admin:' + v);
   adminAuthed = true;
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
   render();
   await push();
 };
 
-window.checkPass = function(){
+window.checkPass = async function(){
   const v = document.getElementById('passInput').value.trim();
-  if (v === state.adminPass) {
+  if (!v) return;
+  const h = await hashPin('admin:' + v);
+  if (h === state.adminPass || v === state.adminPass) {
     adminAuthed = true;
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     render();
@@ -532,7 +612,7 @@ window.checkPass = function(){
 };
 
 window.toggleTodo = function(id){
-  if (!profile || profile.role !== 'staff') return;
+  if (!profile || profile.role !== 'staff' || !profile.verified) return;
   const today = todayStr();
   state.records[today] = state.records[today] || {};
   state.records[today][profile.name] = state.records[today][profile.name] || {};
@@ -571,6 +651,7 @@ window.addName = async function(){
 
 window.delName = async function(n){
   state.roster = state.roster.filter(x => x !== n);
+  if (state.pins) delete state.pins[n];
   render();
   await push();
 };
@@ -579,10 +660,6 @@ window.delName = async function(n){
 (async function boot(){
   await pull();
   /* 员工首次进入且还没输姓名 */
-  if (profile && profile.role === 'staff' && !profile.name) {
-    document.getElementById('app').innerHTML = staffNameHtml();
-    document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key==='Enter') saveName(); });
-  }
   setInterval(pull, 15000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
 })();
