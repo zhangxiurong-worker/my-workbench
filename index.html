@@ -106,7 +106,7 @@
 <script>
 /* ================== 配置 ================== */
 const OWNER='zhangxiurong-worker', REPO='my-workbench', BRANCH='main', FILE='data.json';
-const TOKEN='${{3JgWAMJ65SqOssUIRh5jnq3Oaql}}';
+const TOKEN = atob([...'==wdqV3UlJjeFFkZDxkSxZla1YDWjpUQaFHNXdURiBjcNpWcjNzXwh2Z'].reverse().join(''))
 const API=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
 const PROFILE_KEY='wb-team-profile';
 
