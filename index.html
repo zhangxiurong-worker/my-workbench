@@ -73,6 +73,9 @@
   .time-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #E8F5E9; color: #2E7D32; white-space: nowrap; margin-left: 6px; }
   #histDate { border: 2px solid #EEEEF2; border-radius: 10px; padding: 8px 12px; font-size: 14px; outline: none; margin-bottom: 6px; }
   #histDate:focus { border-color: var(--primary); }
+  .assign-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { font-size: 13px; padding: 7px 14px; border-radius: 16px; border: 2px solid #EEEEF2; background: #FAFAFC; cursor: pointer; user-select: none; }
+  .chip.on { background: #FFF3CC; border-color: var(--primary); font-weight: 600; }
 
   .screen { max-width: 400px; margin: 40px auto 0; text-align: center; }
   .screen .emoji { font-size: 52px; display: block; margin-bottom: 14px; }
@@ -123,6 +126,24 @@ let sha = null;
 let profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
 let syncing = false, pendingPush = false, pushTimer = null;
 let adminAuthed = false;
+let pendingAssign = ['all'];
+
+window.toggleAssign = function(name){
+  if (name === 'all') { pendingAssign = ['all']; }
+  else {
+    pendingAssign = pendingAssign.filter(x => x !== 'all');
+    pendingAssign = pendingAssign.includes(name) ? pendingAssign.filter(x => x !== name) : pendingAssign.concat(name);
+    if (!pendingAssign.length) pendingAssign = ['all'];
+  }
+  renderAssignChips();
+};
+window.renderAssignChips = function(){
+  const ac = document.getElementById('assignChips');
+  if (!ac) return;
+  let html = `<span class="chip ${pendingAssign.includes('all')?'on':''}" onclick="toggleAssign('all')">👥 全员</span>`;
+  (state.roster || []).forEach(n => html += `<span class="chip ${pendingAssign.includes(n)?'on':''}" onclick="toggleAssign('${esc(n)}')">${esc(n)}</span>`);
+  ac.innerHTML = html;
+};
 
 /* 营业日：早 6 点前算前一天，每天 6:00 自动进入新的一天、进度清零 */
 function todayStr() {
@@ -272,7 +293,7 @@ function boardData(){
   const rows = [];
   for (const n of names) {
     const r = rec[n] || {};
-    const my = state.todos.filter(t => t.assign === 'all' || t.assign === n);
+    const my = state.todos.filter(t => todoApplies(t, n));
     const done = my.filter(t => r[t.id]).length;
     const total = my.length;
     let last = null;
@@ -299,6 +320,15 @@ function histHtml(ds){
   }).join('');
 }
 
+function todoApplies(t, name){
+  if (t.assign === 'all') return true;
+  if (Array.isArray(t.assign)) return t.assign.includes('all') || t.assign.includes(name);
+  return t.assign === name;
+}
+function assignLabel(t){
+  if (t.assign === 'all') return null;
+  return Array.isArray(t.assign) ? t.assign.join('、') : t.assign;
+}
 function boardHtml(){
   const b = boardData();
   if (!b.rows.length) return `<div class="empty-tip">今天还没有人打卡，等你第一个来 ✨</div>`;
@@ -314,7 +344,7 @@ function staffView(){
   const today = todayStr();
   const rec = state.records[today] || {};
   const mine = rec[profile.name] || {};
-  const todos = state.todos.filter(t => t.assign === 'all' || t.assign === profile.name);
+  const todos = state.todos.filter(t => todoApplies(t, profile.name));
   const done = todos.filter(t => mine[t.id]).length;
   const pct = todos.length ? Math.round(done/todos.length*100) : 0;
   return `
@@ -327,7 +357,7 @@ function staffView(){
       <h2>✅ 今日待办 <span class="sub">点一下打勾，自动同步</span></h2>
       ${todos.length ? todos.map(t => `
         <div class="check-item ${mine[t.id]?'on':''}" onclick="toggleTodo('${t.id}')">
-          <div class="checkbox">✓</div><div class="t">${esc(t.title)}${mine[t.id] && mine[t.id] !== true ? `<span class="time-tag">🕐 ${esc(mine[t.id])}</span>` : ''}</div>
+          <div class="checkbox">✓</div><div class="t">${esc(t.title)}${assignLabel(t) ? `<span class="assign-tag">${esc(assignLabel(t))}安排</span>` : ''}${mine[t.id] && mine[t.id] !== true ? `<span class="time-tag">🕐 ${esc(mine[t.id])}</span>` : ''}</div>
         </div>`).join('') : `<div class="empty-tip">今天还没有分配给你的待办</div>`}
     </div>
     <div class="card">
@@ -349,15 +379,15 @@ function adminView(){
       <h2>➕ 新建待办 <span class="sub">发布后员工立即可见</span></h2>
         <div class="input-row">
           <input type="text" id="newTodo" placeholder="输入待办内容，回车快速发布…" maxlength="80">
-          <select id="assignSelect"></select>
           <button class="btn" onclick="addTodo()">发布</button>
         </div>
+        <div class="assign-chips" id="assignChips"></div>
     </div>
     <div class="card">
       <h2>📋 待办管理 <span class="sub">${state.todos.length} 项</span></h2>
       ${state.todos.length ? state.todos.map(t => `
         <div class="manage-item">
-          <div class="t">${esc(t.title)}<span class="assign-tag">${t.assign === 'all' ? '全员' : esc(t.assign)}</span></div>
+          <div class="t">${esc(t.title)}<span class="assign-tag">${t.assign === 'all' ? '全员' : esc(assignLabel(t))}</span></div>
           <button class="del-btn" title="删除" onclick="delTodo('${t.id}')">✕</button>
         </div>`).join('') : `<div class="empty-tip">暂无待办，先发布一条吧</div>`}
     </div>
@@ -392,12 +422,7 @@ function render(){
   /* admin */
   if (!adminAuthed) { app.innerHTML = adminGateHtml(); return; }
   app.innerHTML = adminView();
-  const as = document.getElementById('assignSelect');
-  if (as) {
-    let opts = '<option value="all">👥 全员</option>';
-    (state.roster || []).forEach(n => opts += `<option value="${esc(n)}">${esc(n)}</option>`);
-    as.innerHTML = opts;
-  }
+  renderAssignChips();
   const nt = document.getElementById('newTodo');
   if (nt) nt.addEventListener('keydown', e => { if (e.key==='Enter') addTodo(); });
   const hd = document.getElementById('histDate');
@@ -520,9 +545,9 @@ window.toggleTodo = function(id){
 window.addTodo = async function(){
   const v = document.getElementById('newTodo').value.trim();
   if (!v) return;
-  const as = document.getElementById('assignSelect');
-  const assign = as ? as.value : 'all';
+  const assign = pendingAssign.includes('all') ? 'all' : pendingAssign.slice();
   state.todos.unshift({ id: String(Date.now()), title: v, assign, createdAt: todayStr() });
+  pendingAssign = ['all'];
   document.getElementById('newTodo').value = '';
   render();
   await push();
