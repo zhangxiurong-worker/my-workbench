@@ -95,6 +95,37 @@
   .switch-link a { color: var(--text-sub); font-size: 12px; }
   footer { text-align: center; font-size: 11px; color: #BFBFC8; padding: 16px; }
   .admin-tag { font-size: 11px; background: #4A3800; color: var(--primary); padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: 2px; }
+
+  /* 帮助按钮与弹窗 */
+  .help-btn {
+    position: fixed; right: 18px; bottom: 18px; z-index: 60;
+    width: 46px; height: 46px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #FFC300 0%, #FFB300 100%);
+    color: #4A3800; font-size: 22px; font-weight: 700; line-height: 46px; text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25); padding: 0;
+  }
+  .help-btn:hover { transform: scale(1.06); }
+  .help-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 70;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .help-sheet {
+    background: #FFFFFF; width: 100%; max-width: 640px; max-height: 82vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; padding: 22px 24px 34px;
+  }
+  .help-sheet h2 { font-size: 19px; margin-bottom: 4px; }
+  .help-sheet .help-sub { font-size: 12px; color: var(--text-sub); margin-bottom: 14px; }
+  .help-close {
+    float: right; border: none; background: #EEEEF2; color: var(--text-sub);
+    width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; padding: 0;
+  }
+  .help-sheet h3 {
+    font-size: 14px; color: #8A6D00; margin: 16px 0 8px;
+    padding-bottom: 4px; border-bottom: 1px dashed #FFE08A;
+  }
+  .help-item { display: flex; gap: 10px; margin: 9px 0; font-size: 13px; line-height: 1.65; }
+  .help-item b { flex: none; min-width: 74px; color: var(--text); font-weight: 600; }
+  .help-item span { color: #55555F; }
 </style>
 </head>
 <body>
@@ -112,6 +143,36 @@
 <main id="app"><div class="loading">正在连接云端，请稍候…</div></main>
 
 <footer>多人实时同步 · 数据存储于云端 · 遇到问题找管理员</footer>
+
+<button class="help-btn" onclick="toggleHelp()" title="使用帮助">?</button>
+<div class="help-mask" id="helpMask" style="display:none" onclick="if(event.target===this)toggleHelp()">
+  <div class="help-sheet">
+    <button class="help-close" onclick="toggleHelp()">✕</button>
+    <h2>📖 使用帮助</h2>
+    <div class="help-sub">管理员和员工通用 · 看完基本都会用</div>
+
+    <h3>每日规则</h3>
+    <div class="help-item"><b>进度清零</b><span>每天早上 6:00 自动进入新的一天，所有人进度归零，待办清单不变，从头打勾（凌晨 0-6 点打卡算前一天）。</span></div>
+    <div class="help-item"><b>历史保留</b><span>每天的完成记录永久存在云端，按日期存档，随时可查谁完成了什么、几点完成的。</span></div>
+    <div class="help-item"><b>实时同步</b><span>勾选后约 15 秒内自动同步到所有人手机上，也可下拉页面手动刷新。</span></div>
+
+    <h3>员工</h3>
+    <div class="help-item"><b>首次使用</b><span>打开链接 → 输入姓名 → 设置专属密码（至少4位）→ 以后每次用「姓名+密码」登录。</span></div>
+    <div class="help-item"><b>打勾打卡</b><span>只看到分配给自己的待办，做完一项点一下圆圈即完成，时间自动记录。</span></div>
+    <div class="help-item"><b>忘记密码</b><span>找管理员，在「员工名单」里点你名字旁的「重置密码」，设个新密码告诉你。</span></div>
+
+    <h3>管理员</h3>
+    <div class="help-item"><b>发布待办</b><span>点「新建待办」输入内容 → 下方人员标签选择分配给谁（默认全员，可多选指定某些人）→ 发布后员工立即可见。</span></div>
+    <div class="help-item"><b>单独安排</b><span>把「全员」标签再点一下取消，然后点选要安排的员工名字，再发布，就只有他们能看到。</span></div>
+    <div class="help-item"><b>看进度</b><span>「全员进度」显示每人完成数 / 完成率 / 最后打卡时间；「历史记录」选任意日期查看当天详情。</span></div>
+    <div class="help-item"><b>员工管理</b><span>「员工名单」可添加 / 删除员工、重置密码。新员工添加后让他自己打开链接设置密码。</span></div>
+
+    <h3>常见问题</h3>
+    <div class="help-item"><b>看不到待办</b><span>说明这条待办没分配给你。找管理员确认该待办的分配标签里包含你。</span></div>
+    <div class="help-item"><b>换手机</b><span>重新输入姓名+密码即可，密码存在云端，换设备不影响。</span></div>
+    <div class="help-item"><b>页面异常</b><span>关闭页面重新打开（排除缓存）。数据都在云端，不会丢。</span></div>
+  </div>
+</div>
 
 <script>
 /* ================== 配置 ================== */
@@ -144,6 +205,12 @@ window.renderAssignChips = function(){
   (state.roster || []).forEach(n => html += `<span class="chip ${pendingAssign.includes(n)?'on':''}" onclick="toggleAssign('${esc(n)}')">${esc(n)}</span>`);
   ac.innerHTML = html;
 };
+
+/* 使用帮助弹窗开关 */
+function toggleHelp() {
+  const m = document.getElementById('helpMask');
+  m.style.display = (m.style.display === 'none') ? 'flex' : 'none';
+}
 
 /* 营业日：早 6 点前算前一天，每天 6:00 自动进入新的一天、进度清零 */
 function todayStr() {
