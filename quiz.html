@@ -269,6 +269,7 @@ function setMsg(m){ viewMsg = m; render(); window.scrollTo(0,0); }
 
 /* ================== 交互入口（员工） ================== */
 window.chooseRole = function(role){
+  window.userNavigated = true;
   viewMsg = '';
   if (role === 'staff') {
     if (profile && profile.role === 'staff') { view = 'staffHome'; }
@@ -854,9 +855,12 @@ function viewPassChange(){
 (async function init(){
   render();
   await pull();
-  if (!profile) { view = 'role'; }
-  else if (profile.role === 'staff') { view = 'staffHome'; }
-  else { view = 'adminHome'; }
+  /* 用户在加载完成前已点击过界面选择，不覆盖其当前界面 */
+  if (!window.userNavigated) {
+    if (!profile) { view = 'role'; }
+    else if (profile.role === 'staff') { view = 'staffHome'; }
+    else { view = 'adminHome'; }
+  }
   render();
   setInterval(() => { if (!syncing && view !== 'editor' && view !== 'answering') pull(); }, 30000);
   document.getElementById('syncText').onclick = pull;
