@@ -256,8 +256,8 @@ async function pull(){
   } catch(e) {
     setSync('offline');
   }
-  /* 管理员编辑界面 / 答题界面不重绘，避免打断 */
-  if (view !== 'editor' && view !== 'answering') render();
+  /* 表单/答题/编辑界面不重绘，避免清空用户正在输入的内容 */
+  if (!['staffLogin','adminLogin','passChange','answering','editor'].includes(view)) render();
 }
 
 /* ================== 工具 ================== */
